@@ -1,0 +1,239 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+@Styles.Render("~/Content/dropzone-css")
+
+<style>
+    #MainContainer > div {
+        padding: 20px;
+    }
+
+    #myDropzone {
+        border-style: dashed;
+        border-radius: 10px;
+    }
+
+    /*#uploadFiles {
+        overflow-y: scroll;
+        max-height: 500px;
+    }*/
+
+    .dropzone-previews {
+        overflow-y: scroll;
+        max-height: 100px;
+    }
+
+    .file-row {
+        margin-top: 5px;
+    }
+</style>
+
+<div class="jumbotron">
+    <h1>dropzone test</h1>
+</div>
+
+<div id="MainContainer" class="row">
+    @*@using (Html.BeginForm("FileUpload", "Home",
+                               FormMethod.Post,
+                               new
+                               {
+                                   @class = "dropzone",
+                                   id = "dropzone-form",
+                               }))
+        {
+            <div class="fallback">
+                <input name="file" type="file" multiple />
+            </div>
+        }*@
+
+
+
+
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="dropzone" id="myDropzone">
+                <div class="fallback">
+                    <!-- this is the fallback if JS isn't working -->
+                    <input name="file" type="file" multiple />
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="dropzone-previews dropzone"></div>
+        </div>
+    </div>
+    <div id="uploadFiles" class="row">
+        <div id="fileList" class="col-xs-12">
+
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/dropzone")
+
+    <script type="text/javascript">
+
+
+
+
+        $(document).ready(function () {
+            debugger
+            InitFiles();
+        });
+
+        function InitFiles() {
+             $.ajax({
+            type: 'GET',
+            url: "@Url.Action("GetFiles", "Home")",
+            success: function (result, status) {
+                var items = result.datas;
+                $('#fileList').empty();
+                $.each(items, function (index, value) {
+                    var row = '<div class="row file-row"> <div class="col-sm-5">' + value.Name + '</div> <div class="col-sm-5"> <button id="btnDel' + value.Id + '" type="button" title="Remove" onclick="FileRemove(' + value.Id + ')" class="btn btn-xs btn-danger file-del">X</button></div></div>';
+                    $('#fileList').append(row);
+                });
+
+            },
+            error: function (xhr, status, error) {
+                alert("Result: " + status + " " + error + " " + xhr.status + " " + xhr.statusText)
+            }
+        });
+
+        };
+
+        function FileRemove(id) {
+            @*$.ajax({
+                url: "@Url.Action("Delete", "Home")",
+                type: "DELETE",
+                data: JSON.stringify({ id: id }),
+                success: function (data) {
+                    alert(data);
+                },
+
+            });*@
+
+             $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Delete")',
+                    data: JSON.stringify({ id: id }), //use id here
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (r) {
+                        if (r.success) {
+                            InitFiles();
+                        }
+                    },
+                    error: function () {
+                        alert("Error while deleting data");
+                    }
+             });
+        };
+        //Dropzone.options.dropzoneForm = {
+        //    paramName: "file",
+        //    maxFilesize: 20,
+        //    maxFiles: 4,
+        //    acceptedFiles: "image/*",
+        //    dictMaxFilesExceeded: "Custom max files msg",
+        //};
+
+        $('#myDropzone').dropzone({
+
+            addRemoveLinks: true,
+            previewsContainer: ".dropzone-previews",
+            url: '/Home/FileUpload',
+            method: "post",
+            maxFilesize: 2, //MB,
+            paramName: "file",
+            init: function () {
+                var myDropzone = this;
+
+
+                myDropzone.on("complete", function (file) {
+                    debugger
+                    if (file.accepted == true) {
+                        setTimeout(function () {
+                            myDropzone.removeFile(file);
+                            InitFiles();
+                        }, 1000);
+                    }
+                });
+
+
+                //   this.on("success", function (file, resp) {
+                // debugger
+                // console.log(file);
+                // console.log(resp);
+
+                //$(function () {
+                //    setTimeout(function () {
+                //                $('.dz-success').fadeOut('slow');
+                //            }, 2000);
+                //});
+                //if (file.previewElement) {
+                //    return file.previewElement.classList.add("dz-success"),
+                //        $(function () {
+                //            setTimeout(function () {
+                //                $('.dz-success').fadeOut('slow');
+                //            }, 2000);
+                //        });
+                //}
+                // });
+
+
+
+            }
+        });
+
+        //Dropzone.autoDiscover = false
+        //const myDropzone = new Dropzone('#myDropzone', {
+        //    autoProcessQueue: false,
+        //    addRemoveLinks: true,
+        //    previewsContainer: ".dropzone-previews",
+        //    url: '/Home/FileUpload',
+        //    method: "post",
+        //    maxFilesize: 2, //MB,
+        //    paramName: "file",
+        //    init: function () {
+        //        this.on("success", function (file) {
+        //        });
+        //    }
+        //});
+        //var files = new Array();
+        //myDropzone.on("addedfile", function (file) {
+        //    /* Maybe display some more file information on your page */
+
+        //    files.push(file);
+
+        //    const acceptedFiles = files;//myDropzone.getAcceptedFiles()
+        //    //myDropzone.processQueue();
+        //    myDropzone.processFiles(files);
+        //    //for (let i = 0; i < acceptedFiles.length; i++) {
+        //    //    setTimeout(function () {
+        //    //        myDropzone.processFile(acceptedFiles[i]);
+        //    //        //$('.dz-success').fadeOut('slow');
+        //    //    }, 2000);
+        //    //}
+        //});
+        //myDropzone.on("complete", function (file) {
+        //    /* Maybe display some more file information on your page */
+
+        //    if (file.accepted == true) {
+        //        setTimeout(function () {
+        //            myDropzone.removeFile(file);
+        //        }, 1000);
+        //    }
+
+
+        //});
+            //myDropzone.on("success", function (file) {
+            //    setTimeout(function () { this.removeFile(file); }, 1000)
+            //});
+
+
+
+
+    </script>
+}
